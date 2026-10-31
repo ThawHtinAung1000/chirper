@@ -2,95 +2,90 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ChirpFileStore;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class ChirpController extends Controller
 {
     /**
-     * Feature 3: Display all Chirps
+     * Display all Chirps.
      */
-    public function index()
+    public function index(ChirpFileStore $store)
     {
-        $disk = Storage::disk('local');
-        $file = 'chirps.json';
+        $chirps = $store->all();
 
-        // Step 1: Read existing Chirps
-        if ($disk->exists($file)) {
-            $chirps = json_decode(
-                $disk->get($file),
-                true,
-                512,
-                JSON_THROW_ON_ERROR
-            );
-        } else {
-            $chirps = [];
-        }
-
-        // Step 2: Sort newest first
+        // Newest first
         usort($chirps, function ($a, $b) {
             return strtotime($b['created_at'])
                 <=> strtotime($a['created_at']);
         });
 
-        // Step 3: Pass Chirps to Blade
-        return view('home', [
-            'chirps' => $chirps
-        ]);
+        return view('home', compact('chirps'));
     }
 
     /**
-     * Feature 2: Create a Chirp
+     * Create a new Chirp.
      */
-    public function store(Request $request)
-    {
-        // Step 1: Validate
+    public function store(
+        Request $request,
+        ChirpFileStore $store
+    ) {
         $validated = $request->validate([
             'content' => 'required|string|max:280',
         ]);
 
-        $disk = Storage::disk('local');
-        $file = 'chirps.json';
-
-        // Step 2: Read existing Chirps
-        $chirps = $disk->exists($file)
-            ? json_decode(
-                $disk->get($file),
-                true,
-                512,
-                JSON_THROW_ON_ERROR
-            )
-            : [];
-
-        // Step 3: Create Chirp
-        $chirp = [
-            'id' => (string) Str::uuid(),
-            'author' => 'Guest',
-            'content' => $validated['content'],
-            'created_at' => now()->toIso8601String(),
-        ];
-
-        // Step 4: Add new Chirp
-        array_unshift($chirps, $chirp);
-
-        // Step 5: Save to JSON
-        $saved = $disk->put(
-            $file,
-            json_encode(
-                $chirps,
-                JSON_PRETTY_PRINT |
-                JSON_UNESCAPED_UNICODE |
-                JSON_THROW_ON_ERROR
-            )
-        );
-
-        if (!$saved) {
-            abort(500, 'Unable to save Chirp.');
-        }
+        $store->create($validated['content']);
 
         return redirect()
             ->route('home')
             ->with('success', 'Chirp created successfully!');
+    }
+
+    /**
+     * Display the edit form.
+     */
+    public function edit(
+        string $chirp,
+        ChirpFileStore $store
+    ) {
+        $foundChirp = $store->find($chirp);
+
+        if ($foundChirp === null) {
+            abort(404, 'Chirp not found.');
+        }
+
+        return view('chirps.edit', [
+            'chirp' => $foundChirp,
+        ]);
+    }
+
+    /**
+     * Update an existing Chirp.
+     */
+    public function update(
+        Request $request,
+        string $chirp,
+        ChirpFileStore $store
+    ) {
+        // Step 1: Validate content
+        $validated = $request->validate([
+            'content' => 'required|string|max:280',
+        ]);
+
+        // Step 2: Update selected Chirp
+        $updatedChirp = $store->update(
+            $chirp,
+            $validated['content']
+        );
+
+        // Step 3: Return 404 when UUID is missing
+        if ($updatedChirp === null) {
+            abort(404, 'Chirp not found.');
+        }
+
+        // Step 4: Redirect back to feed
+        return redirect()
+            ->route('home')
+            ->with('success', 'Chirp updated successfully!');
     }
 }
