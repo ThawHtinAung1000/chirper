@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Chirper - Mini Blog</title>
 
@@ -17,7 +16,8 @@
             padding: 15px;
         }
 
-        .card, .chirp {
+        .card,
+        .chirp {
             background: white;
             padding: 20px;
             border: 1px solid #ddd;
@@ -33,7 +33,8 @@
             border-radius: 6px;
         }
 
-        button, .edit-button {
+        button,
+        .edit-button {
             display: inline-block;
             background: #2563eb;
             color: white;
@@ -75,6 +76,30 @@
             text-align: center;
             color: #777;
         }
+
+        .chirp-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .chirp-actions form {
+            margin: 0;
+        }
+
+        .delete-button {
+            background: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 16px;
+            cursor: pointer;
+        }
+
+        .delete-button:hover {
+            background: #b91c1c;
+        }
     </style>
 </head>
 
@@ -96,18 +121,12 @@
 
         <h2>Create a Chirp</h2>
 
-        <form action="{{ route('chirps.store') }}"
-              method="POST">
+        <form action="{{ route('chirps.store') }}" method="POST">
 
             @csrf
 
-            <textarea
-                name="content"
-                rows="4"
-                maxlength="280"
-                placeholder="What's happening?"
-                required
-            >{{ old('content') }}</textarea>
+            <textarea name="content" rows="4" maxlength="280" placeholder="What's happening?"
+                required>{{ old('content') }}</textarea>
 
             @error('content')
                 <p class="error">{{ $message }}</p>
@@ -136,8 +155,8 @@
             <div class="date">
                 Created:
                 {{ \Carbon\Carbon::parse(
-                    $chirp['created_at']
-                )->format('d M Y, h:i A') }}
+            $chirp['created_at']
+        )->format('d M Y, h:i A') }}
 
                 @if(!empty($chirp['updated_at']))
                     <span>
@@ -148,13 +167,27 @@
 
             <p class="content">{{ $chirp['content'] }}</p>
 
-            <!-- Feature 4: Edit Button -->
-            <a
-                href="{{ route('chirps.edit', $chirp['id']) }}"
-                class="edit-button"
-            >
-                Edit
-            </a>
+            <!-- Chirp Actions -->
+            <div class="chirp-actions">
+
+                <!-- Feature 4: Edit -->
+                <a href="{{ route('chirps.edit', $chirp['id']) }}" class="edit-button">
+                    Edit
+                </a>
+
+                <!-- Feature 5: Delete -->
+                <form action="{{ route('chirps.destroy', $chirp['id']) }}" method="POST"
+                    onsubmit="return confirm('Are you sure you want to delete this Chirp? This action cannot be undone.');">
+                    @csrf
+                    @method('DELETE')
+
+                    <button type="submit" class="delete-button">
+                        Delete
+                    </button>
+                </form>
+
+            </div>
+
 
         </div>
 
@@ -167,4 +200,5 @@
     @endforelse
 
 </body>
+
 </html>

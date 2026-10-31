@@ -88,4 +88,23 @@ class ChirpController extends Controller
             ->route('home')
             ->with('success', 'Chirp updated successfully!');
     }
+
+    /**
+     * Delete a Chirp.
+     */
+    public function destroy(
+        string $chirp,
+        ChirpFileStore $store
+    ) {
+        $deleted = $store->delete($chirp);
+
+        if (!$deleted) {
+            abort(404, 'Chirp not found.');
+        }
+
+        return redirect()
+            ->route('home')
+            ->with('success', 'Chirp deleted successfully!');
+    }
+
 }

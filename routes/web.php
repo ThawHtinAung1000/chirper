@@ -1,25 +1,30 @@
-
 <?php
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ChirpController;
 
-//Create Chirp
-Route::post('/chirps', [ChirpController::class, 'store'])
-    ->name('chirps.store');
-
-//Display Chirps
+// Feature 3: Display all Chirps
 Route::get('/', [ChirpController::class, 'index'])
     ->name('home');
 
-// Show the edit form
+// Feature 2: Create Chirp
+Route::post('/chirps', [ChirpController::class, 'store'])
+    ->name('chirps.store');
+
+// Feature 4: Display edit form
 Route::get('/chirps/{chirp}/edit', [
     ChirpController::class,
     'edit'
 ])->name('chirps.edit');
 
-// Update a Chirp
+// Feature 4: Update Chirp
 Route::put('/chirps/{chirp}', [
     ChirpController::class,
     'update'
 ])->name('chirps.update');
+
+// Feature 5: Delete Chirp
+Route::delete('/chirps/{chirp}', [
+    ChirpController::class,
+    'destroy'
+])->name('chirps.destroy');

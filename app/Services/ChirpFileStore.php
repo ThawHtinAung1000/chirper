@@ -73,6 +73,25 @@ class ChirpFileStore
         );
     }
 
+    
+public function delete(string $id): bool
+{
+    return $this->withLock(
+        true,
+        function (array &$chirps) use ($id): bool {
+            foreach ($chirps as $index => $chirp) {
+                if (($chirp['id'] ?? null) === $id) {
+                    array_splice($chirps, $index, 1);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    );
+}
+
+
     /**
      * Read or modify the JSON file with a lock.
      */
